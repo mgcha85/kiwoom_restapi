@@ -1,0 +1,15 @@
+app:
+  domain: "https://api.kiwoom.com"
+  mock_domain: "https://mockapi.kiwoom.com"
+  token_expiry: 3600
+
+db:
+  host: "localhost"
+  port: 5432
+  database: "kiwoom_db"
+  user: "postgres"
+  password: "postgres_password"
+
+log:
+  level: "INFO"
+  file: "kiwoom_auto_trader.log"
