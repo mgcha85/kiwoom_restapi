@@ -1,5 +1,3 @@
-# src/api/market.py
-
 from src.api.base_client import BaseAPIClient
 
 class MarketAPI(BaseAPIClient):

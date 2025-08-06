@@ -1,0 +1,4 @@
+[2025-08-06 09:27:01] [ERROR] [src.trading.condition_search] API 요청 중 오류 발생: 'ConditionSearch' object has no attribute 'api_url'
+[2025-08-06 09:29:59] [ERROR] [src.trading.condition_search] API 요청 실패, 상태 코드: 500
+[2025-08-06 09:30:19] [ERROR] [src.trading.condition_search] API 요청 실패, 상태 코드: 500
+[2025-08-06 09:30:55] [ERROR] [src.trading.condition_search] API 요청 실패, 상태 코드: 500

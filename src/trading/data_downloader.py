@@ -17,3 +17,4 @@ def download_daily_data(stock_code: str, date: str) -> dict:
 if __name__ == '__main__':
     data = download_daily_data("005930", "20241107")
     print("다운로드 데이터:", data)
+    

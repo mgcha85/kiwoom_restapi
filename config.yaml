@@ -3,12 +3,20 @@ app:
   mock_domain: "https://mockapi.kiwoom.com"
   token_expiry: 3600
 
-db:
-  host: "localhost"
-  port: 5432
-  database: "kiwoom_db"
-  user: "postgres"
-  password: "postgres_password"
+# db:
+#   host: "localhost"
+#   port: 5432
+#   database: "kiwoom_db"
+#   user: "postgres"
+#   password: "postgres_password"
+
+database:
+  engine: sqlite
+  name: trading_bot.db
+  user: null
+  password: null
+  host: null
+  port: null
 
 log:
   level: "INFO"
