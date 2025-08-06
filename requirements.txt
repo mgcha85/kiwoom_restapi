@@ -6,3 +6,5 @@ psycopg2-binary
 websockets
 pydantic-settings
 pandas
+uvicorn
+fastapi

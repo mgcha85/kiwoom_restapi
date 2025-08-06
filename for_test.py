@@ -1,53 +1,137 @@
-import requests
-from bs4 import BeautifulSoup
+import asyncio
+import websockets
+import json
+from typing import List, Dict
 
-def get_stock_current_price(stock_code: str) -> float:
-    """
-    네이버 금융에서 특정 종목(예: '005930')의 현재가를 반환합니다.
-    
-    :param stock_code: 종목코드 (예: '005930'은 삼성전자)
-    :return: 현재가 (실수형), 가져오지 못할 경우 None
-    """
-    # 네이버 금융 종목 페이지 URL 구성
-    url = f"https://finance.naver.com/item/main.nhn?code={stock_code}"
-    
-    try:
-        response = requests.get(url)
-        # 네이버는 euc-kr 인코딩을 사용합니다.
-        response.encoding = "euc-kr"
-    except Exception as e:
-        print("HTTP 요청 실패:", e)
-        return None
+SOCKET_URL = 'wss://api.kiwoom.com:10000/api/dostk/websocket'
+# 토큰을 파일에서 읽어옵니다.
+with open("access_token.txt", "r") as f:
+    ACCESS_TOKEN = f.read().strip()
 
-    # BeautifulSoup으로 HTML 파싱
-    soup = BeautifulSoup(response.text, "html.parser")
-    
-    # 오늘의 가격 정보가 포함된 div (class "today")
-    today_div = soup.find("div", class_="today")
-    if not today_div:
-        print("오늘의 가격 정보를 찾지 못했습니다.")
-        return None
-    
-    # 현재가는 "span" 태그 내 class "blind"에 담겨있는 경우가 많습니다.
-    price_span = today_div.find("span", class_="blind")
-    if not price_span:
-        print("현재가 정보를 찾지 못했습니다.")
-        return None
 
-    # 쉼표(,) 제거 후 실수형 변환
-    price_text = price_span.text.replace(",", "").strip()
-    try:
-        current_price = float(price_text)
-        return current_price
-    except Exception as e:
-        print("가격 파싱 실패:", e)
-        return None
+class WebSocketClient:
+	def __init__(self, uri):
+		self.uri = uri
+		self.websocket = None
+		self.connected = False
+		self.keep_running = True
 
-# 사용 예시
-if __name__ == "__main__":
-    stock_code = "005930"  # 삼성전자 예시
-    price = get_stock_current_price(stock_code)
-    if price is not None:
-        print(f"{stock_code} 종목의 현재가: {price}")
-    else:
-        print("현재가를 가져오지 못했습니다.")
+	# WebSocket 서버에 연결합니다.
+	async def connect(self):
+		try:
+			self.websocket = await websockets.connect(self.uri)
+			self.connected = True
+			print("서버와 연결을 시도 중입니다.")
+
+			# 로그인 패킷
+			param = {
+				'trnm': 'LOGIN',
+				'token': ACCESS_TOKEN
+			}
+
+			print('실시간 시세 서버로 로그인 패킷을 전송합니다.')
+			# 웹소켓 연결 시 로그인 정보 전달
+			await self.send_message(message=param)
+
+		except Exception as e:
+			print(f'Connection error: {e}')
+			self.connected = False
+
+	# 서버에 메시지를 보냅니다. 연결이 없다면 자동으로 연결합니다.
+	async def send_message(self, message):
+		if not self.connected:
+			await self.connect()  # 연결이 끊어졌다면 재연결
+		if self.connected:
+			# message가 문자열이 아니면 JSON으로 직렬화
+			if not isinstance(message, str):
+				message = json.dumps(message)
+
+		await self.websocket.send(message)
+		print(f'Message sent: {message}')
+
+	# 서버에서 오는 메시지를 수신하여 출력합니다.
+	async def receive_messages(self):
+		while self.keep_running:
+			try:
+				# 서버로부터 수신한 메시지를 JSON 형식으로 파싱
+				response = json.loads(await self.websocket.recv())
+
+				# 메시지 유형이 LOGIN일 경우 로그인 시도 결과 체크
+				if response.get('trnm') == 'LOGIN':
+					if response.get('return_code') != 0:
+						print('로그인 실패하였습니다. : ', response.get('return_msg'))
+						await self.disconnect()
+					else:
+						print('로그인 성공하였습니다.')
+						print('조건검색 목록조회 패킷을 전송합니다.')
+						# 로그인 패킷
+						param = {
+							'trnm': 'CNSRLST'
+						}
+						await self.send_message(message=param)
+
+				# 메시지 유형이 PING일 경우 수신값 그대로 송신
+				elif response.get('trnm') == 'PING':
+					await self.send_message(response)
+
+				if response.get('trnm') == 'CNSRREQ':
+					print(f'실시간 시세 서버 응답 수신: {response}')
+					return response
+
+			except websockets.ConnectionClosed:
+				print('Connection closed by the server')
+				self.connected = False
+				await self.websocket.close()
+
+	# WebSocket 실행
+	async def run(self):
+		# await self.connect()
+		return await self.receive_messages()
+
+	# WebSocket 연결 종료
+	async def disconnect(self):
+		self.keep_running = False
+		if self.connected and self.websocket:
+			await self.websocket.close()
+			self.connected = False
+			print('Disconnected from WebSocket server')
+
+async def main():
+	# WebSocketClient 전역 변수 선언
+	websocket_client = WebSocketClient(SOCKET_URL)
+
+	# WebSocket 클라이언트를 백그라운드에서 실행합니다.
+	# receive_task = asyncio.create_task(websocket_client.run())
+	await websocket_client.connect()
+
+	# 3) 조건검색 요청
+	await websocket_client.send_message({
+		'trnm': 'CNSRREQ',
+		'seq': '1',
+		'search_type': '0',
+		'stex_tp': 'K',
+		'cont_yn': 'N',
+		'next_key': '',
+	})
+
+	# 4) run() 호출해서 receive_messages() 반환값(첫 CNSRREQ 응답)을 받습니다
+	response = await websocket_client.run()
+	print("최종 응답:", response)
+
+	# # 실시간 항목 등록
+	# await asyncio.sleep(1)
+	# await websocket_client.send_message({ 
+	# 	'trnm': 'CNSRREQ', # 서비스명
+	# 	'seq': '1', # 조건검색식 일련번호
+	# 	'search_type': '0', # 조회타입
+	# 	'stex_tp': 'K', # 거래소구분
+	# 	'cont_yn': 'N', # 연속조회여부
+	# 	'next_key': '', # 연속조회키
+	# })
+
+	# # 수신 작업이 종료될 때까지 대기
+	# await receive_task
+
+# asyncio로 프로그램을 실행합니다.
+if __name__ == '__main__':
+	asyncio.run(main())
