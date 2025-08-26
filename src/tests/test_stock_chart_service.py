@@ -24,7 +24,7 @@ if daily_chart_df is not None:
     print(daily_chart_df)
 
 # 분봉 차트 조회
-intraday_chart_df = stock_chart_service.get_intraday_chart(stk_cd, tic_scope='1')  # 1분봉
-if intraday_chart_df is not None:
-    print("분봉 차트:")
-    print(intraday_chart_df)
+# intraday_chart_df = stock_chart_service.get_intraday_chart(stk_cd, tic_scope='1')  # 1분봉
+# if intraday_chart_df is not None:
+#     print("분봉 차트:")
+#     print(intraday_chart_df)
