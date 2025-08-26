@@ -1,5 +1,5 @@
 from src.api.base_client import BaseAPIClient
-from src.models.account_model import AssetResponse, AccountDetailResponse
+from src.models.account_model import AssetResponse, AccountDetailResponse, AccountEvalResponse
 import json
 
 class AccountService(BaseAPIClient):
@@ -26,6 +26,18 @@ class AccountService(BaseAPIClient):
         response = self.post(self.endpoint, data=data, headers=headers)
         if response.status_code == 200:
             return AssetResponse(**response.json())  # AssetResponse 모델로 반환
+        else:
+            print(f"Error: {response.status_code}")
+            return None
+        
+    def get_status(self, data={"qry_tp": "0"}, cont_yn='N', next_key=''):
+        """계좌평가현황요청"""
+        headers = self._get_headers(cont_yn=cont_yn, next_key=next_key)
+        headers['api-id'] = 'kt00004'  # 추정자산 조회 TR명
+
+        response = self.post(self.endpoint, data=data, headers=headers)
+        if response.status_code == 200:
+            return AccountEvalResponse(**response.json())  # AssetResponse 모델로 반환
         else:
             print(f"Error: {response.status_code}")
             return None

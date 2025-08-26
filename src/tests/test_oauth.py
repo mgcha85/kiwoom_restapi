@@ -20,3 +20,7 @@ print("Access Token:", token)
 # 토큰을 파일에 저장
 with open("access_token.txt", "w") as f:
     f.write(token)
+
+
+# oauth_client = OAuthClient()
+# oauth_client.revoke_token(token)

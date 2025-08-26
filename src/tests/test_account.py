@@ -19,6 +19,11 @@ asset_response = account_service.get_asset(data={"qry_tp": "0"})
 if asset_response:
     print("추정자산 조회 결과:", asset_response)
 
+# 추정자산 조회
+asset_response = account_service.get_status(data={"qry_tp": "0", "dmst_stex_tp": "KRX"})
+if asset_response:
+    print("계좌평가현황요청 조회 결과:", asset_response)
+
 # 예수금 상세 현황 조회
 account_details_response = account_service.get_account_details(data={'qry_tp': '3'})
 if account_details_response:
