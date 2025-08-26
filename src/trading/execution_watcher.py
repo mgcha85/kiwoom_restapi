@@ -13,6 +13,12 @@ from src.db import (
     get_order_by_no,
     record_execution,         # SELL이면 내부 FIFO 매칭으로 trades 생성
 )
+from src.db.hold_sqlite import (
+    _get_conn,
+    init_hold_table,
+    get_hold,
+)
+
 from src.config import config
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -23,6 +29,9 @@ with open(os.path.join(project_root, "access_token.txt"), "r", encoding="utf-8")
 # 환경 변수
 # -----------------------------
 ACCOUNT_ID = os.getenv("KIWOOM_ACCOUNT_ID", "ACC1")
+MAX_SPLITS = int(os.getenv("MAX_SPLITS", "4"))
+TARGET_PCT = float(os.getenv("TARGET_PCT", "0.1"))
+STOP_PCT = float(os.getenv("STOP_PCT", "-0.1"))
 
 # 기본 수수료/세금(실계좌 정책 반영 필요 시 교체)
 DEFAULT_BUY_COMMISSION = Decimal(os.getenv("DEFAULT_BUY_COMMISSION", "0.00"))
@@ -80,56 +89,58 @@ def _safe_get(d: Dict[str, Any], key: str, default: str = "") -> str:
 def handle_order_execution_real(values: Dict[str, Any]) -> None:
     order_no = _safe_get(values, "9203") or _safe_get(values, "9205")
 
-    # 1) orders 테이블에서 정규 정보 우선 가져오기
+    # 1) orders 테이블 등록정보(있으면 우선)
     db_order = get_order_by_no(order_no) if order_no else None
     db_account_id = getattr(db_order, "account_id", None)
     db_ticker     = getattr(db_order, "ticker", None)
 
-    # 2) 실시간 패킷 값 (fallback)
-    raw_ticker = _safe_get(values, "9001")
-    market   = _safe_get(values, "2135") or "KRX"
-    order_qty = _safe_get(values, "900")
-    remaining_qty = _safe_get(values, "902")
-    exec_qty = _safe_get(values, "911")
-    side_txt = _safe_get(values, "905")
-    status   = _safe_get(values, "913")
-    qty_all  = _safe_get(values, "907")
-    last_tm  = _safe_get(values, "908")
-    px27     = _safe_get(values, "910")
-    px10     = _safe_get(values, "10")
-    comm     = _safe_get(values, "938")
-    tax      = _safe_get(values, "939")
-    # order_price = _safe_get(values, "901")
-    # exec_qty = order_qty - remaining_qty
+    # 2) 실시간 패킷 값
+    raw_ticker      = _safe_get(values, "9001")
+    market          = _safe_get(values, "2135") or "KRX"
+    order_qty_s     = _safe_get(values, "900")   # 주문수량
+    remain_qty_s    = _safe_get(values, "902")   # 미체결수량
+    exec_qty_s      = _safe_get(values, "911")   # 이번 체결수량
+    side_txt        = _safe_get(values, "905")   # +매수/+매도
+    status          = _safe_get(values, "913")   # 접수/체결/…
+    qty_all_s       = _safe_get(values, "907")   # 매도수/매수수 구분수량(브로커 형식)
+    last_tm         = _safe_get(values, "908")   # 체결시각(HHMMSS)
+    px_exec_s       = _safe_get(values, "910")   # 체결가(FID 910) ※ 문서 예시 상 여기 체결가
+    px_ref_s        = _safe_get(values, "10")    # 현재가(대체)
+    comm_s          = _safe_get(values, "938")   # 수수료
+    tax_s           = _safe_get(values, "939")   # 세금(보통 SELL)
 
+    # 디버깅: 모든 주요 필드 출력
     print(
-        f"raw_ticker={raw_ticker}, "
-        f"market={market}, "
-        f"side_txt={side_txt}, "
-        f"status={status}, "
-        f"qty_all={qty_all}, "
-        f"last_tm={last_tm}, "
-        f"px27={px27}, "
-        f"px10={px10}, "
-        f"comm={comm}, "
-        f"tax={tax}, "
-        f"exec_qty_candidate={exec_qty}"
+        "REAL(00) ▶ "
+        f"order_no={order_no}, raw_ticker={raw_ticker}, market={market}, "
+        f"side_txt={side_txt}, status={status}, "
+        f"order_qty={order_qty_s}, remain_qty={remain_qty_s}, exec_qty={exec_qty_s}, qty_all={qty_all_s}, "
+        f"exec_time={last_tm}, px_exec={px_exec_s}, px_ref={px_ref_s}, "
+        f"commission={comm_s}, tax={tax_s}"
     )
 
-    # 3) 파싱/정규화
-    side = _parse_side(side_txt)
-    price = _to_decimal(px27) if _to_decimal(px27) > 0 else _to_decimal(px10)
-    order_qty = _to_decimal(qty_all)
-    commission = _to_decimal(comm)
-    sell_tax = _to_decimal(tax)
-    exec_time = _parse_exec_time(last_tm)
+    # 3) 정규화/파싱
+    side        = _parse_side(side_txt)  # BUY / SELL
+    price_exec  = _to_decimal(px_exec_s)
+    price_ref   = _to_decimal(px_ref_s)
+    price       = price_exec if price_exec > 0 else price_ref
 
-    # **핵심**: ticker/account_id는 DB 값을 최우선, 없으면 스트림값을 정규화해서 사용
-    ticker = db_ticker or _normalize_ticker(raw_ticker)
-    account_id = db_account_id or ACCOUNT_ID
+    order_qty   = _to_decimal(order_qty_s)
+    remain_qty  = _to_decimal(remain_qty_s)
+    exec_qty    = _to_decimal(exec_qty_s)
+    if exec_qty <= 0:
+        # 일부 브로커 패킷에서 누락되면 방어적으로 처리
+        exec_qty = order_qty if order_qty > 0 else Decimal("1")
 
-    st = (status or "").strip()
+    commission  = _to_decimal(comm_s)
+    sell_tax    = _to_decimal(tax_s)
+    exec_time   = _parse_exec_time(last_tm)
 
+    ticker      = db_ticker or _normalize_ticker(raw_ticker)
+    account_id  = db_account_id or ACCOUNT_ID
+    st          = (status or "").strip()
+
+    # 4) 상태별 주문 상태 갱신
     if st == "접수":
         if order_no:
             update_order_status(order_no=order_no, status="ACCEPTED")
@@ -143,37 +154,134 @@ def handle_order_execution_real(values: Dict[str, Any]) -> None:
             update_order_status(order_no=order_no, status="AMENDED")
         return
 
-    # === 체결 ===
+    # 5) 체결 처리
     if "체결" in st:
-        exec_qty = _to_decimal(exec_qty)
-        remaining_qty = _to_decimal(remaining_qty)
-
-        if exec_qty <= 0:
-            exec_qty = order_qty if order_qty > 0 else Decimal("1")
-
-        exec_id = f"{side}-EXEC-{order_no}-{exec_time.strftime('%H%M%S')}"
+        # exec_id (체결번호가 있으면 그걸 쓰고, 없으면 구성)
+        exec_no = _safe_get(values, "909")
+        if exec_no:
+            exec_id = f"{side}-EXEC-{exec_no}"
+        else:
+            exec_id = f"{side}-EXEC-{order_no}-{exec_time.strftime('%H%M%S')}"
 
         use_commission = commission if commission > 0 else (
             DEFAULT_BUY_COMMISSION if side == "BUY" else DEFAULT_SELL_COMMISSION
         )
         use_tax = sell_tax if side == "SELL" else Decimal("0.00")
 
-        if remaining_qty == 0:
-            # SELL이면 db.record_execution 내부에서 FIFO 매칭 → trades 생성
-            rec_id = record_execution(
-                exec_id=str(exec_id),
-                order_no=str(order_no) if order_no else "UNKNOWN",
-                account_id=account_id,
-                ticker=ticker,
-                market=str(market),
-                side=side,
-                qty=float(exec_qty),
-                price=float(price),
-                commission=float(use_commission),
-                tax=float(use_tax),
-                exec_time=exec_time
-            )
-        print(f"[EXEC] saved exec_id={rec_id}, side={side}, order_no={order_no}, ticker={ticker}, qty={exec_qty}, price={price}")
+        # (A) executions 항상 기록
+        rec_id = record_execution(
+            exec_id=str(exec_id),
+            order_no=str(order_no) if order_no else "UNKNOWN",
+            account_id=account_id,
+            ticker=ticker,
+            market=str(market),
+            side=side,
+            qty=float(exec_qty),
+            price=float(price),
+            commission=float(use_commission),
+            tax=float(use_tax),
+            exec_time=exec_time
+        )
+
+        # (B) orders 상태 갱신
+        if order_no:
+            if remain_qty == 0:
+                update_order_status(order_no=order_no, status="FILLED")
+            else:
+                update_order_status(order_no=order_no, status="PARTIALLY_FILLED")
+
+        # (C) hold_list 갱신 (핵심)
+        now_ts = datetime.now(timezone.utc).replace(tzinfo=None)
+        row = get_hold(account_id, ticker)
+
+        if side == "BUY":
+            # 신규/추가 매수 → 평단/수량/수수료/세금 누적 + n_trade 증가(최대 4)
+            if row is None:
+                new_qty = exec_qty
+                new_avg = price
+                n_trade = 1
+                target  = (new_avg * (Decimal("1")+TARGET_PCT)).quantize(Decimal("0.01"))
+                stop    = (new_avg * (Decimal("1")+STOP_PCT)).quantize(Decimal("0.01"))
+                _sql = """
+                    INSERT INTO hold_list
+                    (account_id, ticker, market,
+                     qty, remain_qty, buy_avg_price, n_trade,
+                     buy_time, last_buy_time, target_price, stop_price,
+                     fee_accum, tax_accum, last_order_id, updated_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """
+                _args = (
+                    account_id, ticker, market,
+                    str(new_qty), str(new_qty), str(new_avg), n_trade,
+                    now_ts, now_ts, str(target), str(stop),
+                    str(use_commission), str(use_tax), order_no, now_ts
+                )
+            else:
+                old_qty = Decimal(str(row["qty"]))
+                old_avg = Decimal(str(row["buy_avg_price"]))
+                old_fee = Decimal(str(row["fee_accum"]))
+                old_tax = Decimal(str(row["tax_accum"]))
+                old_n   = int(row["n_trade"]) if row["n_trade"] is not None else 0
+
+                new_qty = old_qty + exec_qty
+                new_avg = ((old_avg * old_qty) + (price * exec_qty)) / (new_qty if new_qty != 0 else Decimal("1"))
+                new_avg = new_avg.quantize(Decimal("0.000001"))
+                n_trade = min(old_n + 1, MAX_SPLITS)
+                fee_acc = old_fee + use_commission
+                tax_acc = old_tax + use_tax
+                target  = (new_avg * (Decimal("1")+TARGET_PCT)).quantize(Decimal("0.01"))
+                stop    = (new_avg * (Decimal("1")+STOP_PCT)).quantize(Decimal("0.01"))
+
+                _sql = """
+                    UPDATE hold_list
+                    SET qty=?, remain_qty=?, buy_avg_price=?, n_trade=?,
+                        last_buy_time=?, target_price=?, stop_price=?,
+                        fee_accum=?, tax_accum=?, last_order_id=?, updated_at=?
+                    WHERE account_id=? AND ticker=?
+                """
+                _args = (
+                    str(new_qty), str(new_qty), str(new_avg), n_trade,
+                    now_ts, str(target), str(stop),
+                    str(fee_acc), str(tax_acc), order_no, now_ts,
+                    account_id, ticker
+                )
+
+        else:  # SELL
+            # 보유 수량 차감, 수수료/세금 누적
+            if row is not None:
+                old_qty = Decimal(str(row["qty"]))
+                old_rem = Decimal(str(row["remain_qty"]))
+                old_fee = Decimal(str(row["fee_accum"]))
+                old_tax = Decimal(str(row["tax_accum"]))
+
+                new_qty = max(old_qty - exec_qty, Decimal("0"))
+                new_rem = max(old_rem - exec_qty, Decimal("0"))
+                fee_acc = old_fee + use_commission
+                tax_acc = old_tax + use_tax
+
+                _sql = """
+                    UPDATE hold_list
+                    SET qty=?, remain_qty=?, fee_accum=?, tax_accum=?, updated_at=?
+                    WHERE account_id=? AND ticker=?
+                """
+                _args = (
+                    str(new_qty), str(new_rem), str(fee_acc), str(tax_acc), now_ts,
+                    account_id, ticker
+                )
+            else:
+                _sql, _args = None, None
+
+        # (D) hold_list에 반영
+        if _sql:
+            with _get_conn() as _c:
+                _c.execute(_sql, _args)
+                _c.commit()
+
+        print(
+            f"[EXEC] rec_id={rec_id}, side={side}, order_no={order_no}, "
+            f"ticker={ticker}, exec_qty={exec_qty}, price={price}, "
+            f"remain(order)={remain_qty}, hold.updated"
+        )
         return
 
 # -----------------------------
@@ -272,6 +380,7 @@ class ExecutionWatcher:
             raise RuntimeError("KIWOOM_ACCESS_TOKEN env is required")
 
         init_db()
+        init_hold_table()
 
         backoff = backoff_start
         while self.keep_running:

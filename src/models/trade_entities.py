@@ -67,3 +67,32 @@ class Trade(Base):
     opened_at: Mapped[Optional[str]] = mapped_column(TIMESTAMP(timezone=True))
     closed_at: Mapped[Optional[str]] = mapped_column(TIMESTAMP(timezone=True))
     holding_seconds: Mapped[int] = mapped_column(Integer)
+
+
+class Hold(Base):
+    __tablename__ = "hold_list"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    account_id: Mapped[str] = mapped_column(String(32))
+    ticker: Mapped[str] = mapped_column(String(16), index=True)     # 예: '005930'
+    market: Mapped[str] = mapped_column(String(16), default="KRX")
+    name: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    qty: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    remain_qty: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    buy_avg_price: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    n_trade: Mapped[int] = mapped_column(Integer, default=0)  # 분할매수 횟수 (최대 4)
+
+    buy_time: Mapped[Optional[str]] = mapped_column(DateTime(timezone=False))
+    last_buy_time: Mapped[Optional[str]] = mapped_column(DateTime(timezone=False))
+    due_date: Mapped[Optional[str]] = mapped_column(DateTime(timezone=False))
+
+    target_price: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+    stop_price: Mapped[Decimal] = mapped_column(Numeric(18, 6), default=Decimal("0"))
+
+    fee_accum: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+    tax_accum: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+
+    last_order_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    updated_at: Mapped[Optional[str]] = mapped_column(DateTime(timezone=False))
