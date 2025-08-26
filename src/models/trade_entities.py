@@ -1,6 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Integer, Numeric, TIMESTAMP, Text
+from sqlalchemy import String, Integer, Numeric, TIMESTAMP, Text, DateTime
+from decimal import Decimal
 
 # Declarative Base (SQLAlchemy 2.x)
 # https://docs.sqlalchemy.org/en/latest/orm/declarative_tables.html
