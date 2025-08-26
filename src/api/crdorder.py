@@ -3,8 +3,8 @@
 from src.api.base_client import BaseAPIClient
 
 class CreditOrderAPI(BaseAPIClient):
-    def __init__(self, use_mock: bool = False):
-        super().__init__(use_mock=use_mock)
+    def __init__(self):
+        super().__init__()
     
     def credit_buy_order(self, token: str, order_data: dict, cont_yn: str = 'N', next_key: str = '') -> dict:
         endpoint = '/api/dostk/crdordr'

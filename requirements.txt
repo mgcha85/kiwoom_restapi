@@ -8,3 +8,8 @@ pydantic-settings
 pandas
 uvicorn
 fastapi
+sqlalchemy
+sqlalchemy-orm
+pytest
+pandas-ta
+plotly

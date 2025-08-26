@@ -44,6 +44,7 @@ class TradeExecutor:
             logger.info(f"매수 주문 결과: {buy_response}")
             logger.info(f"매도 주문 결과: {sell_response}")
 
+
 if __name__ == '__main__':
     token = "your_access_token"
     executor = TradeExecutor(token)

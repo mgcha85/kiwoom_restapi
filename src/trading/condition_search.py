@@ -1,9 +1,40 @@
+import sys
+import os
+
+# 프로젝트 루트 경로를 sys.path에 추가
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+src_path = os.path.join(project_root, 'src')
+sys.path.append(src_path)
+
+from src.api.market import MarketAPI
+from src.utils.logger import get_logger
+
 import asyncio
 import websockets
 import json
 from typing import List, Dict
 
-SOCKET_URL = 'wss://api.kiwoom.com:10000/api/dostk/websocket'  # 운영 도메인
+
+logger = get_logger(__name__)
+
+SOCKET_URL = 'wss://mockapi.kiwoom.com:10000/api/dostk/websocket'  # 운영 도메인
+
+class ConditionSearch:
+    def __init__(self, token: str):
+        self.token = token
+        self.market_api = MarketAPI()
+
+    def search_conditions(self, conditions: dict) -> list:
+        """
+        조건 검색을 통해 주식 코드를 수집합니다.
+        (실제 조건에 맞춰 API 호출 로직을 구현할 수 있습니다.)
+        """
+        stock_code = conditions.get("stk_cd", "005930")  # 기본 예시
+        result = self.market_api.get_stock_info(token=self.token, stock_code=stock_code)
+        logger.info(f"조건 검색 결과: {result}")
+        # 예시로 종목코드 반환
+        return [result.get("stk_cd", "")]
+
 
 # 토큰을 파일에서 읽어옵니다.
 with open("access_token.txt", "r") as f:

@@ -28,12 +28,14 @@ LOG_FILE = os.getenv("LOG_FILE", "kiwoom_auto_trader.log")
 APP_KEY = os.getenv("APP_KEY")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+USE_MOCK = bool(os.getenv("USE_MOCK"))
 
 class AppConfig:
     def __init__(self):
         self.domain = APP_DOMAIN
         self.mock_domain = APP_MOCK_DOMAIN
         self.token_expiry = APP_TOKEN_EXPIRY
+        self.ws_url = os.getenv('WS_URL_MOCK') if USE_MOCK else os.getenv('WS_URL')
 
 class DBConfig:
     def __init__(self):

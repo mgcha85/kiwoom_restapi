@@ -4,8 +4,8 @@ from src.config import APP_KEY, SECRET_KEY
 
 
 class OAuthClient(BaseAPIClient):
-    def __init__(self, use_mock: bool = False):
-        super().__init__(use_mock=use_mock)
+    def __init__(self):
+        super().__init__()
     
     def get_access_token(self) -> OAuthResponse:
         endpoint = '/oauth2/token'
@@ -13,7 +13,7 @@ class OAuthClient(BaseAPIClient):
             grant_type="client_credentials",
             appkey=APP_KEY,
             secretkey=SECRET_KEY
-        ).dict()
+        ).model_dump()
         
         response = self.post(endpoint, data=payload)
         response_json = response.json()

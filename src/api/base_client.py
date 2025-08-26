@@ -1,11 +1,10 @@
-# src/api/base_client.py
-
 import requests
-from src.config import config
+from src.config import config, USE_MOCK
+
 
 class BaseAPIClient:
-    def __init__(self, use_mock: bool = False):
-        self.use_mock = use_mock
+    def __init__(self):
+        self.use_mock = USE_MOCK
         if self.use_mock:
             self.base_url = config.app.mock_domain
         else:

@@ -12,7 +12,7 @@ from src.api.account_service import AccountService
 with open("access_token.txt", "r") as f:
     token = f.read().strip()
 
-account_service = AccountService(token)
+account_service = AccountService(token=token)
 
 # 추정자산 조회
 asset_response = account_service.get_asset(data={"qry_tp": "0"})

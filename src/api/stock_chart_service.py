@@ -1,13 +1,11 @@
-# src/api/stock_chart_service.py
-
 from src.api.base_client import BaseAPIClient
 import pandas as pd
 import requests
 import json
 
 class StockChartService(BaseAPIClient):
-    def __init__(self, token: str, use_mock: bool = False):
-        super().__init__(use_mock=use_mock)
+    def __init__(self, token: str):
+        super().__init__()
         self.token = token
         self.endpoint = '/api/dostk/chart'
 

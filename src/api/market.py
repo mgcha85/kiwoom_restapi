@@ -1,8 +1,8 @@
 from src.api.base_client import BaseAPIClient
 
 class MarketAPI(BaseAPIClient):
-    def __init__(self, use_mock: bool = False):
-        super().__init__(use_mock=use_mock)
+    def __init__(self):
+        super().__init__()
     
     def get_stock_info(self, token: str, stock_code: str, cont_yn: str = 'N', next_key: str = '') -> dict:
         endpoint = '/api/dostk/stkinfo'

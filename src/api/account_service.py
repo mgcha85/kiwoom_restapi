@@ -3,8 +3,8 @@ from src.models.account_model import AssetResponse, AccountDetailResponse
 import json
 
 class AccountService(BaseAPIClient):
-    def __init__(self, token: str, use_mock: bool = False):
-        super().__init__(use_mock=use_mock)
+    def __init__(self, token: str):
+        super().__init__()
         self.token = token
         self.endpoint = '/api/dostk/acnt'
 
@@ -24,7 +24,6 @@ class AccountService(BaseAPIClient):
         headers['api-id'] = 'kt00003'  # 추정자산 조회 TR명
 
         response = self.post(self.endpoint, data=data, headers=headers)
-
         if response.status_code == 200:
             return AssetResponse(**response.json())  # AssetResponse 모델로 반환
         else:

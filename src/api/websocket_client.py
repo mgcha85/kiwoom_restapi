@@ -1,5 +1,3 @@
-# src/api/websocket_client.py
-
 import asyncio
 import websockets
 import json
