@@ -14,7 +14,7 @@ src_path = os.path.join(project_root, 'src')
 if src_path not in sys.path:
     sys.path.append(src_path)
 
-from src.api.stock_chart_service import StockChartService  # 제공하신 서비스 사용
+from api.stock_chart_service import StockChartService  # 제공하신 서비스 사용
 
 # -----------------------------
 # 설정
@@ -225,29 +225,29 @@ def main():
 
     con = sqlite3.connect(DB_URL)
     stock_df = pd.read_sql("SELECT * FROM 'stockList'", con)
+    stock_df.dropna(subset=['종목코드', 'type'], inplace=True)
+
     if "종목코드" not in stock_df.columns:
         raise ValueError("엑셀에 '종목코드' 컬럼이 필요합니다.")
 
-    codes = (
+    stock_df["종목코드"] = (
         stock_df["종목코드"]
         .astype(str)
         .str.replace(r"\D", "", regex=True)
         .str.zfill(6)
-        .dropna()
-        .unique()
-        .tolist()
     )
-
+    codes = (stock_df["종목코드"] + '.' + stock_df["type"]).tolist()
     svc = StockChartService(token)
 
     # 루프: 각 종목 일봉 다운로드 → DB 저장
     for code in tqdm(codes):
-        sleep(0.25)
+        sleep(0.33)
         try:
-            df_daily = svc.get_daily_chart(code, BASE_DT)  # DataFrame 반환 가정
+            df_daily = svc.get_daily_chart(code.split('.')[0], BASE_DT)  # DataFrame 반환 가정
             if df_daily is None or df_daily.empty:
                 print(f"[{code}] 일봉 데이터 없음")
                 continue
+            # df_daily = df_daily[:-1]
             upsert_daily_candles(code, df_daily)
         except Exception as e:
             print(f"[{code}] 에러: {e}")

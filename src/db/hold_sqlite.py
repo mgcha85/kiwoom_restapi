@@ -4,6 +4,7 @@ import sqlite3
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime
 from typing import Optional, Dict, Any
+import pandas as pd
 
 from src.config import config
 
@@ -61,6 +62,14 @@ def get_hold(account_id: str, ticker: str) -> Optional[sqlite3.Row]:
             (account_id, ticker)
         )
         return cur.fetchone()
+
+def get_hold_list() -> pd.DataFrame:
+    with _get_conn() as conn:
+        query = "SELECT * FROM hold_list WHERE order_id IS NOT NULL"
+        df = pd.read_sql(query, con=conn)
+        if not df.empty and "code" in df.columns:
+            df = df.set_index("code")
+        return df
 
 def upsert_hold_after_buy(
     *,

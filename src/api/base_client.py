@@ -1,5 +1,5 @@
 import requests
-from src.config import config, USE_MOCK
+from config import config, USE_MOCK
 
 
 class BaseAPIClient:

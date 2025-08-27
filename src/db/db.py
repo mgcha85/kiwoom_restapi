@@ -123,6 +123,7 @@ def list_orders_by_status(status: str) -> List[Order]:
         stmt = select(Order).where(Order.status == status)
         return list(s.execute(stmt).scalars().all())
 
+
 # ---------------------------------------------------------------------
 # FIFO 매칭 & Trade 생성
 # ---------------------------------------------------------------------
