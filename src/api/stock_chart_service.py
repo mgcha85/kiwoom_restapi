@@ -1,4 +1,4 @@
-from src.api.base_client import BaseAPIClient
+from api.base_client import BaseAPIClient
 import pandas as pd
 import requests
 import json

@@ -1,4 +1,3 @@
-# src/trading/daily_candle_downloader.py
 import os
 import sys
 import sqlite3
@@ -6,6 +5,8 @@ from datetime import datetime
 from typing import Optional
 from time import sleep
 import pandas as pd
+import requests
+from tqdm import tqdm
 
 # 프로젝트 루트 경로 추가
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -19,9 +20,10 @@ from src.api.stock_chart_service import StockChartService  # 제공하신 서비
 # 설정
 # -----------------------------
 DB_DIR = os.path.join(project_root, "sqlite3")
-DB_PATH = os.path.join(DB_DIR, "candle_data.sqlite3")
-EXCEL_PATH = os.path.join(project_root, "stocklist.xlsx")  # '주식코드' 컬럼
+DB_PATH = os.path.join(DB_DIR, "candle_data.db")
+DB_URL = os.path.join(DB_DIR, 'meta.db')  # '종목코드' 컬럼
 BASE_DT = datetime.now().strftime("%Y%m%d")  # 당일 기준으로 요청
+# BASE_DT = '20240101'
 
 # -----------------------------
 # 유틸
@@ -57,16 +59,17 @@ def _normalize_daily_df(df: pd.DataFrame) -> pd.DataFrame:
     # 예상되는 원본 컬럼: dt, open_pric, high_pric, low_pric, cur_prc, trde_qty
     colmap = {
         "dt": "date",
-        "open_pric": "open",
-        "high_pric": "high",
-        "low_pric": "low",
-        "cur_prc": "close",
-        "trde_qty": "volume",
+        "open": "open",
+        "high": "high",
+        "low": "low",
+        "close": "close",
+        "volume": "volume",
         # 혹시 다른 이름으로 올 수 있는 대비
         "trde_prica": "value",  # 사용하지 않지만 예시 보존
     }
 
     # 컬럼 이름 표준화(있는 것만)
+    df = df.reset_index()
     df = df.rename(columns={k: v for k, v in colmap.items() if k in df.columns})
 
     # 필요한 컬럼만 추출
@@ -162,11 +165,11 @@ def upsert_daily_candles(code: str, df_daily: pd.DataFrame):
         # 표준화
         df_norm = _normalize_daily_df(df_daily)
 
-        if last_date:
+        if last_date is None or last_date == 'None':
+            df_new = df_norm.copy()
+        else:
             # last_date 이후만 저장
             df_new = df_norm[df_norm["date"] > last_date].copy()
-        else:
-            df_new = df_norm.copy()
 
         if df_new.empty:
             print(f"[{code}] 신규 데이터 없음 (last_date={last_date})")
@@ -176,6 +179,38 @@ def upsert_daily_candles(code: str, df_daily: pd.DataFrame):
         df_new.to_sql(table, con, if_exists="append", index=False)
         print(f"[{code}] 신규 {len(df_new)}건 저장 완료 (마지막: {df_new['date'].max()})")
 
+def download_krx_stock_list(file_name: str):
+        """
+        KRX 상장법인목록 엑셀 파일을 POST 요청으로 다운로드하고, pandas로 읽어들여 반환합니다.
+
+        Returns:
+            pd.DataFrame: 상장 종목 데이터프레임
+        """
+        # POST 요청 URL
+        url = "https://kind.krx.co.kr/corpgeneral/corpList.do"
+
+        # POST 요청에 필요한 데이터 (폼 데이터)
+        payload = {
+            "method": "download",
+            "pageIndex": "1",
+            "currentPageSize": "5000"  # 최대 5000개 종목을 가져오도록 설정
+        }
+
+        # 헤더 정보
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Referer": "https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage"
+        }
+
+        # POST 요청 보내기
+        response = requests.post(url, data=payload, headers=headers)
+        response.raise_for_status()  # 요청 실패 시 예외 발생
+
+        # 응답 내용을 엑셀 파일로 저장
+        with open(file_name, "wb") as file:
+            file.write(response.content)
+
 # -----------------------------
 # 메인 로직
 # -----------------------------
@@ -184,16 +219,17 @@ def main():
     with open(os.path.join(project_root, "access_token.txt"), "r", encoding="utf-8") as f:
         token = f.read().strip()
 
-    # 종목 리스트 로드
-    if not os.path.exists(EXCEL_PATH):
-        raise FileNotFoundError(f"엑셀 파일을 찾을 수 없습니다: {EXCEL_PATH}")
+    # # 종목 리스트 로드
+    # if not os.path.exists(DB_PATH):
+    #     raise FileNotFoundError(f"엑셀 파일을 찾을 수 없습니다: {DB_PATH}")
 
-    stock_df = pd.read_excel(EXCEL_PATH)
-    if "주식코드" not in stock_df.columns:
-        raise ValueError("엑셀에 '주식코드' 컬럼이 필요합니다.")
+    con = sqlite3.connect(DB_URL)
+    stock_df = pd.read_sql("SELECT * FROM 'stockList'", con)
+    if "종목코드" not in stock_df.columns:
+        raise ValueError("엑셀에 '종목코드' 컬럼이 필요합니다.")
 
     codes = (
-        stock_df["주식코드"]
+        stock_df["종목코드"]
         .astype(str)
         .str.replace(r"\D", "", regex=True)
         .str.zfill(6)
@@ -205,7 +241,7 @@ def main():
     svc = StockChartService(token)
 
     # 루프: 각 종목 일봉 다운로드 → DB 저장
-    for code in codes:
+    for code in tqdm(codes):
         sleep(0.25)
         try:
             df_daily = svc.get_daily_chart(code, BASE_DT)  # DataFrame 반환 가정
@@ -218,4 +254,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # download_krx_stock_list('krx_stock_list.xls')
     main()

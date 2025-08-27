@@ -13,3 +13,8 @@ sqlalchemy-orm
 pytest
 pandas-ta
 plotly
+tqdm
+pykrx
+lxml
+html5lib
+beautifulsoup4
