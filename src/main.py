@@ -41,7 +41,8 @@ def open_yaml(file_path: str):
 def get_current_price(token: str, stock_code: str) -> int:
     market = MarketAPI()
     info = market.get_stock_info(token=token, stock_code=stock_code)
-    return int(info.get("last", 0))
+    info = parse_stock_info(info)
+    return info.get("cur_prc")
 
 # 매도 주문
 def place_sell_order(token: str, code: str, qty: int, price: int):
@@ -94,23 +95,29 @@ def place_buy_order(token: str, code: str, qty: int, price: int):
         )
 
 # 잔고 계산
-def cal_account_balance(seed: float) -> float:
+def cal_account_balance(token: str, seed: float) -> float:
     # 실제 잔고는 get_asset 으로 가져올 수 있지만, seed 값 그대로 사용
-    return seed
+    account_service = AccountService(token=token)
+    account_details_response = account_service.get_account_details(data={'qry_tp': '3'})
+    if account_details_response:
+        print("예수금 상세 현황 조회 결과:", account_details_response)
+        return account_details_response.entr
 
 # 09:00 매도 주문
 def opening_orders(token: str, config: dict):
     hold_list = get_hold_list()
-    for code, row in hold_list.iterrows():
+    for _, row in hold_list.iterrows():
         sleep(HOLD_INTERVAL)
-        avg_price = row["avg_price"]
+
+        code = row['ticker']
+        avg_price = row["buy_avg_price"]
         qty = row["qty"]
         current_price = get_current_price(token, code)
         if current_price == 0:
             logging.warning(f"[{code}] 현재가 조회 실패")
             continue
-
-        sell_price = int(avg_price * config['sell_price_adjustment'])
+        
+        sell_price = row['target_price']
         sell_price = calculate_tick_price(sell_price)
 
         if current_price * 1.2 > sell_price:
@@ -120,13 +127,13 @@ def opening_orders(token: str, config: dict):
 
 # 15:20 매수 주문
 def closing_buy_orders(token: str, config: dict):
-    hold_list = get_hold_list()
+    hold_list = get_hold_list(' WHERE last_order_id is not NULL')
     max_hold = config['max_hold_stocks']
     if hold_list.shape[0] >= max_hold:
         logging.info(f"보유 종목이 {max_hold}개 이상입니다.")
         return
 
-    balance = cal_account_balance(config['seeds'])
+    balance = cal_account_balance(token, config['seeds'])
     if balance == 0:
         logging.info("매수 가능 잔고가 없습니다.")
         return
@@ -134,7 +141,8 @@ def closing_buy_orders(token: str, config: dict):
     # 조건 검색식 기반 종목 코드 조회
     from trading.condition_ws import fetch_condition_codes
     import asyncio
-    codes = asyncio.run(fetch_condition_codes(token, seq="2", stex_tp="K"))[:max_hold]
+    codes = asyncio.run(fetch_condition_codes(token, seq="1", stex_tp="K"))[:max_hold] + \
+        asyncio.run(fetch_condition_codes(token, seq="2", stex_tp="K"))[:max_hold]
 
     for code in codes:
         sleep(HOLD_INTERVAL)
@@ -148,6 +156,8 @@ def closing_buy_orders(token: str, config: dict):
 # 메인 함수
 def main():
     config = open_yaml("config.yaml")
+    
+    # set_access_token()
     token = get_access_token()
     init_db()
 

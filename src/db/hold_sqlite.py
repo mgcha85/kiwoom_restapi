@@ -8,7 +8,7 @@ import pandas as pd
 
 from config import config
 
-DB_PATH = getattr(config.db, "sqlite_path", "./data/trading.sqlite3")
+DB_PATH = getattr(config.db, "sqlite_path", "./sqlite3/trade_test.db")
 
 def _get_conn():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -63,9 +63,9 @@ def get_hold(account_id: str, ticker: str) -> Optional[sqlite3.Row]:
         )
         return cur.fetchone()
 
-def get_hold_list() -> pd.DataFrame:
+def get_hold_list(filter: str='') -> pd.DataFrame:
     with _get_conn() as conn:
-        query = "SELECT * FROM hold_list WHERE order_id IS NOT NULL"
+        query = "SELECT * FROM hold_list" + filter
         df = pd.read_sql(query, con=conn)
         if not df.empty and "code" in df.columns:
             df = df.set_index("code")
