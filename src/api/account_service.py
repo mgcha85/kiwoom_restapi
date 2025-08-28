@@ -1,5 +1,5 @@
-from src.api.base_client import BaseAPIClient
-from src.models.account_model import AssetResponse, AccountDetailResponse, AccountEvalResponse
+from api.base_client import BaseAPIClient
+from models.account_model import AssetResponse, AccountDetailResponse, AccountEvalResponse
 import json
 
 class AccountService(BaseAPIClient):

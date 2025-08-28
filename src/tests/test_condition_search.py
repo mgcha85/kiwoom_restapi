@@ -1,5 +1,5 @@
 import os
-from src.trading.condition_ws import fetch_condition_codes, fetch_condition_list
+from trading.condition_ws import fetch_condition_codes, fetch_condition_list
 import asyncio
 
 

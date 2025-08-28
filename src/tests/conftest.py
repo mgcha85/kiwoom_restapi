@@ -3,8 +3,8 @@ import os
 import pathlib
 import pytest
 
-from src.db.db import engine, SessionLocal
-from src.models.trade_entities import Base
+from db.db import engine, SessionLocal
+from models.trade_entities import Base
 
 # 테스트용 SQLite 파일 경로
 TEST_DB_PATH = pathlib.Path(__file__).parent / "trade_test.db"

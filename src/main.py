@@ -12,14 +12,14 @@ src_path = os.path.join(project_root, 'src')
 sys.path.append(src_path)
 
 # 서비스 모듈 import
-from src.api.oauth import OAuthClient
-from src.api.market import MarketAPI
-from src.api.account_service import AccountService
-from src.api.order import OrderAPI
-from src.db.hold_sqlite import get_hold_list
-from src.db.db import create_order, init_db
+from api.oauth import OAuthClient
+from api.market import MarketAPI
+from api.account_service import AccountService
+from api.order import OrderAPI
+from db.hold_sqlite import get_hold_list
+from db.db import create_order, init_db
 from utils.calculate_utils import calculate_tick_price
-from src.helpers import *
+from helpers import *
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -132,7 +132,7 @@ def closing_buy_orders(token: str, config: dict):
         return
 
     # 조건 검색식 기반 종목 코드 조회
-    from src.trading.condition_ws import fetch_condition_codes
+    from trading.condition_ws import fetch_condition_codes
     import asyncio
     codes = asyncio.run(fetch_condition_codes(token, seq="2", stex_tp="K"))[:max_hold]
 
@@ -173,7 +173,7 @@ def main():
         pause.until(download_time)
 
     revoke_access_token()
-    
+
 
 if __name__ == "__main__":
     try:

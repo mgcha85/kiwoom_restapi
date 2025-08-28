@@ -16,8 +16,8 @@ src_path = os.path.join(project_root, 'src')
 if src_path not in sys.path:
     sys.path.append(src_path)
 
-from src.api.account_service import AccountService
-from src.trading.bet_allocator import BetSizingConfig, compute_bet_unit
+from api.account_service import AccountService
+from trading.bet_allocator import BetSizingConfig, compute_bet_unit
 
 # ---------------------------------------------------------------------
 # 1) 토큰 로드 & AccountService 준비

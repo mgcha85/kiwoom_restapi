@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from datetime import datetime, timezone
 from typing import List
-from src.models.trade_entities import Execution, Trade
+from models.trade_entities import Execution, Trade
 
 def _csv(ids: List[str]) -> str:
     return ",".join(ids)

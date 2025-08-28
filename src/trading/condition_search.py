@@ -6,8 +6,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 src_path = os.path.join(project_root, 'src')
 sys.path.append(src_path)
 
-from src.api.market import MarketAPI
-from src.utils.logger import get_logger
+from api.market import MarketAPI
+from utils.logger import get_logger
 
 import asyncio
 import websockets

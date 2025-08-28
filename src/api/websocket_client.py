@@ -1,7 +1,7 @@
 import asyncio
 import websockets
 import json
-from src.config import APP_KEY  # 실제 환경에서는 OAuth를 통해 획득한 Access Token 사용
+from config import APP_KEY  # 실제 환경에서는 OAuth를 통해 획득한 Access Token 사용
 
 # 기본 WebSocket 접속 URL (실전)
 SOCKET_URL = "wss://api.kiwoom.com:10000/api/dostk/websocket"

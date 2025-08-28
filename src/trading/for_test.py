@@ -5,7 +5,7 @@ src = sqlite3.connect("trade_amount.sqlite3")
 dst = sqlite3.connect("trade_amount.db")
 
 # 커서 생성
-src_cur = src.cursor()
+src_cur = cursor()
 dst_cur = dst.cursor()
 
 # 원본 DB의 모든 테이블 이름 가져오기
@@ -33,7 +33,7 @@ for table in tables:
 
 # 커밋 및 종료
 dst.commit()
-src.close()
+close()
 dst.close()
 
 print("모든 테이블을 trade_amount.db로 옮겼습니다.")

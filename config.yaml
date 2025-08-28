@@ -15,7 +15,7 @@ condition_name:
   - 코스피대상
 
 trade:
-  seeds: 7000000
+  seeds: 7_000_000
   n_split: 4
   max_hold_stocks: 2
   max_hold_days: 90

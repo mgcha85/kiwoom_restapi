@@ -1,5 +1,5 @@
 import unittest
-from src.trading.trade_executor import TradeExecutor
+from trading.trade_executor import TradeExecutor
 
 class TestOrderExecution(unittest.TestCase):
     def test_order_execution_and_db_save(self):

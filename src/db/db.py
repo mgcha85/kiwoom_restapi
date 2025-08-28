@@ -9,12 +9,12 @@ from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import sessionmaker
 
 # 내부적으로만 엔티티를 참조하고, 외부 모듈에는 노출하지 않음
-from src.models.trade_entities import Base, Order, Execution, Trade
+from models.trade_entities import Base, Order, Execution, Trade, Hold
 
 # ---------------------------------------------------------------------
 # 기본 세팅
 # ---------------------------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./trade_test.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sqlite3/trade_test.db")
 
 engine = create_engine(
     DATABASE_URL,

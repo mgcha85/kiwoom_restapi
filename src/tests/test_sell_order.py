@@ -10,8 +10,8 @@ src_path = os.path.join(project_root, 'src')
 if src_path not in sys.path:
     sys.path.append(src_path)
 
-from src.api.order import OrderAPI
-from src.db import (
+from api.order import OrderAPI
+from db import (
     init_db,
     create_order,
 )

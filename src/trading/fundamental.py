@@ -12,7 +12,7 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from tqdm import tqdm
-from src.trading.helper import getStockCode
+from trading.helper import getStockCode
 
 
 def get_stockList(db_url: str):

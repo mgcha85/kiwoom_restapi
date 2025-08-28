@@ -1,4 +1,4 @@
-from src.api.base_client import BaseAPIClient
+from api.base_client import BaseAPIClient
 
 class OrderAPI(BaseAPIClient):
     def __init__(self):

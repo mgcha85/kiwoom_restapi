@@ -1,4 +1,4 @@
-[2025-08-06 09:27:01] [ERROR] [src.trading.condition_search] API ¿äÃ» Áß ¿À·ù ¹ß»ý: 'ConditionSearch' object has no attribute 'api_url'
-[2025-08-06 09:29:59] [ERROR] [src.trading.condition_search] API ¿äÃ» ½ÇÆÐ, »óÅÂ ÄÚµå: 500
-[2025-08-06 09:30:19] [ERROR] [src.trading.condition_search] API ¿äÃ» ½ÇÆÐ, »óÅÂ ÄÚµå: 500
-[2025-08-06 09:30:55] [ERROR] [src.trading.condition_search] API ¿äÃ» ½ÇÆÐ, »óÅÂ ÄÚµå: 500
+[2025-08-06 09:27:01] [ERROR] [trading.condition_search] API ï¿½ï¿½Ã» ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½: 'ConditionSearch' object has no attribute 'api_url'
+[2025-08-06 09:29:59] [ERROR] [trading.condition_search] API ï¿½ï¿½Ã» ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½: 500
+[2025-08-06 09:30:19] [ERROR] [trading.condition_search] API ï¿½ï¿½Ã» ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½: 500
+[2025-08-06 09:30:55] [ERROR] [trading.condition_search] API ï¿½ï¿½Ã» ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½: 500

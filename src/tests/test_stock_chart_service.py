@@ -6,7 +6,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 src_path = os.path.join(project_root, 'src')
 sys.path.append(src_path)
 
-from src.api.stock_chart_service import StockChartService
+from api.stock_chart_service import StockChartService
 
 # 토큰을 파일에서 읽어옵니다.
 with open("access_token.txt", "r") as f:

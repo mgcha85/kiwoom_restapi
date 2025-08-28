@@ -1,6 +1,6 @@
 import unittest
 import asyncio
-from src.api.websocket_client import WebSocketClient
+from api.websocket_client import WebSocketClient
 
 class TestRealtimeCandle(unittest.TestCase):
     def test_realtime_candle(self):

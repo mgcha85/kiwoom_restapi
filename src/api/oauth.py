@@ -1,6 +1,6 @@
-from src.api.base_client import BaseAPIClient
-from src.models.oauth_model import OAuthRequest, OAuthResponse
-from src.config import APP_KEY, SECRET_KEY
+from api.base_client import BaseAPIClient
+from models.oauth_model import OAuthRequest, OAuthResponse
+from config import APP_KEY, SECRET_KEY
 
 
 class OAuthClient(BaseAPIClient):

@@ -1,7 +1,7 @@
 # src/trading/trade_executor.py
 
-from src.api.order import OrderAPI
-from src.utils.logger import get_logger
+from api.order import OrderAPI
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 

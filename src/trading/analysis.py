@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 import sqlite3
 # import torch
-from src.trading.indicators import compute_indicators
+from trading.indicators import compute_indicators
 from db.hold_sqlite import get_hold_list
 from utils.calculate_utils import calculate_tick_price
 from typing import List

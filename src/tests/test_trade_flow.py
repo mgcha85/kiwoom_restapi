@@ -9,15 +9,15 @@ project_root = pathlib.Path("C:/Users/woori/Documents/PythonProjects/kiwoom_rest
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from src.api.order import OrderAPI
-from src.db.db import SessionLocal
+from api.order import OrderAPI
+from db.db import SessionLocal
 from sqlalchemy import select, text
 from sqlalchemy import inspect as sa_inspect
 
 # ORM 엔티티
-from src.models.trade_entities import Trade
-from src.models.trade_entities import Order as OrderRow
-from src.models.trade_entities import Execution as ExecRow
+from models.trade_entities import Trade
+from models.trade_entities import Order as OrderRow
+from models.trade_entities import Execution as ExecRow
 
 # (선택) positions 테이블이 ORM에 없다면 간단히 로컬 모델 선언 (조회 전용)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column

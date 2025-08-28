@@ -4,7 +4,7 @@ import os
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
-from src.config import config, LOG_FILE
+from config import config, LOG_FILE
 
 def get_logger(name: str = __name__, level: int = None) -> logging.Logger:
     """

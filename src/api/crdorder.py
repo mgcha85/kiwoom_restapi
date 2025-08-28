@@ -1,6 +1,6 @@
 # src/api/crdorder.py
 
-from src.api.base_client import BaseAPIClient
+from api.base_client import BaseAPIClient
 
 class CreditOrderAPI(BaseAPIClient):
     def __init__(self):

@@ -6,7 +6,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 src_path = os.path.join(project_root, 'src')
 sys.path.append(src_path)
 
-from src.api.market import MarketAPI
+from api.market import MarketAPI
 
 def get_stock_current_price(token, stock_code):
     market_api = MarketAPI()

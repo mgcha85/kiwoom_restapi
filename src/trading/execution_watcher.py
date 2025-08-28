@@ -7,19 +7,19 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 import re
 
-from src.db import (
+from db import (
     init_db,
     update_order_status,
     get_order_by_no,
     record_execution,         # SELL이면 내부 FIFO 매칭으로 trades 생성
 )
-from src.db.hold_sqlite import (
+from db.hold_sqlite import (
     _get_conn,
     init_hold_table,
     get_hold,
 )
 
-from src.config import config
+from config import config
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 with open(os.path.join(project_root, "access_token.txt"), "r", encoding="utf-8") as f:

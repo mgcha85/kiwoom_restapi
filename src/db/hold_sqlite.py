@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import pandas as pd
 
-from src.config import config
+from config import config
 
 DB_PATH = getattr(config.db, "sqlite_path", "./data/trading.sqlite3")
 

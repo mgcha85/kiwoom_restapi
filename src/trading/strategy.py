@@ -5,14 +5,14 @@ from typing import Dict, Tuple, List, Optional
 import pandas as pd
 
 # 프로젝트 내부 유틸/서비스 경로로 교체
-from src.trading.indicators import compute_indicators           # 기존 services.indicators -> src.trading.indicators 로 배치 권장
-from src.utils.calculate_utils import calculate_tick_price
-from src.utils.config_utils import open_yaml                    # 유지
-from src.api.order import OrderAPI
+from trading.indicators import compute_indicators           # 기존 services.indicators -> trading.indicators 로 배치 권장
+from utils.calculate_utils import calculate_tick_price
+from utils.config_utils import open_yaml                    # 유지
+from api.order import OrderAPI
 
 # (선택) 보유종목 목록/한도 관리가 있으면 연결, 없으면 pass
 try:
-    from src.db.portfolio import get_hold_list  # 사용자가 만들었을 수도 있음
+    from db.portfolio import get_hold_list  # 사용자가 만들었을 수도 있음
 except Exception:
     def get_hold_list():
         # DataFrame-like (index=ticker, columns=['num_buy']) 를 기대하던 코드 호환용 stub
