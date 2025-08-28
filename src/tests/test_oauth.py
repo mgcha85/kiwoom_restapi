@@ -12,14 +12,13 @@ from src.api.oauth import OAuthClient
 def get_access_token():
     oauth_client = OAuthClient()
     oauth_response = oauth_client.get_access_token()
-    return oauth_response.token
 
-token = get_access_token()
-print("Access Token:", token)
+    token = oauth_response.token
+    print("Access Token:", token)
 
-# 토큰을 파일에 저장
-with open("access_token.txt", "w") as f:
-    f.write(token)
+    # 토큰을 파일에 저장
+    with open("access_token.txt", "w") as f:
+        f.write(token)
 
 
 # oauth_client = OAuthClient()

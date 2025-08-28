@@ -10,6 +10,53 @@ app:
 #   user: "postgres"
 #   password: "postgres_password"
 
+condition_name:
+  - 코스닥대상
+  - 코스피대상
+
+trade:
+  seeds: 7000000
+  n_split: 4
+  max_hold_stocks: 2
+  max_hold_days: 90
+  buy_price_adjustment: 0.9  # 매수 가격 조정 비율 (예: 평균 가격의 90%)
+  sell_price_adjustment: 1.1  # 매도 가격 조정 비율 (예: 평균 가격의 110%)
+
+features:
+  - close
+  - COR
+  - vrate
+  - mapct_200
+  - "시가총액"
+  - days_since_max_high
+  - PBR
+
+
+# 시간 설정
+time_settings:
+  open_time:
+    hour: 9
+    minute: 0
+    second: 0
+    microsecond: 0
+  close_time:
+    hour: 15
+    minute: 25
+    second: 0
+    microsecond: 0
+  download_time:
+    hour: 20
+    minute: 0
+    second: 0
+    microsecond: 0
+
+# 데이터 수집 설정
+data:
+  fundamental: true
+  candle: true
+  screener: true
+
+
 database:
   engine: sqlite
   name: trading_bot.db
