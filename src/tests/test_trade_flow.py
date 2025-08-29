@@ -37,7 +37,7 @@ class PositionRow(_Base):
 
 # --------- 환경 변수 (실/모의 구동 시 필수) ----------
 RUN_LIVE = os.getenv("RUN_LIVE_KIWOOM_TESTS") == "1"
-ACCOUNT_ID = os.getenv("KIWOOM_ACCOUNT_ID", "")  # 예: "ACC1"
+ACCOUNT_ID = os.getenv("ACC_ID", "")  # 예: "ACC1"
 TICKER = os.getenv("KIWOOM_TICKER", "005930")    # 기본 삼성전자
 MARKET = os.getenv("KIWOOM_MARKET", "KOSPI")
 EXPIRE_SEC = int(os.getenv("KIWOOM_TEST_TIMEOUT", "180"))   # 단계별 타임아웃(초, 약간 여유)
@@ -118,7 +118,7 @@ def test_buy_positions_sell_trades_flow():
     4) SELL 체결되면 trades 생성 확인
     * 전제: ws_consumer가 REG(REAL/00) 구독 상태로 실행 중
     """
-    assert ACCOUNT_ID, "환경변수 KIWOOM_ACCOUNT_ID 가 필요합니다."
+    assert ACCOUNT_ID, "환경변수 ACC_ID 가 필요합니다."
     order_api = OrderAPI(use_mock=True)
 
     # ----- 1) BUY 주문 -----

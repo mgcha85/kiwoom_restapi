@@ -18,6 +18,7 @@ from api.account_service import AccountService
 from api.order import OrderAPI
 from db.hold_sqlite import get_hold_list
 from db.db import create_order, init_db
+from trading.data_downloader import main as download_main
 from utils.calculate_utils import calculate_tick_price
 from helpers import *
 
@@ -25,7 +26,7 @@ from helpers import *
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 HOLD_INTERVAL = 0.5
-ACCOUNT_ID = os.getenv("KIWOOM_ACCOUNT_ID", "ACC1")
+ACCOUNT_ID = os.getenv("ACC_ID", "81091874")
 
 def open_yaml(file_path: str):
     import yaml
@@ -157,7 +158,7 @@ def closing_buy_orders(token: str, config: dict):
 def main():
     config = open_yaml("config.yaml")
     
-    # set_access_token()
+    set_access_token()
     token = get_access_token()
     init_db()
 
@@ -181,6 +182,7 @@ def main():
     if now < download_time:
         logging.info(f"Download time까지 대기: {download_time}")
         pause.until(download_time)
+        download_main()
 
     revoke_access_token()
 

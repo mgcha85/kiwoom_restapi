@@ -34,7 +34,7 @@ def set_signal(df):
     volume 증가 및 장대양봉 신호를 감지합니다.
     
     Parameters:
-        df (pd.DataFrame): 종목 데이터 (columns: 'date', 'Close', 'Open', 'High', 'Low', 'Volume')
+        df (pd.DataFrame): 종목 데이터 (columns: 'Date', 'Close', 'Open', 'High', 'Low', 'Volume')
     
     Returns:
         pd.DataFrame: 신호가 감지된 데이터
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     dfs = []
     dates = []
     for ticker in table_list:
-        df = pd.read_sql(f"SELECT * FROM '{ticker}' WHERE date>'2019-07-01'", conn)
+        df = pd.read_sql(f"SELECT * FROM '{ticker}' WHERE Date>'2019-07-01'", conn)
         if df.shape[0] < 1000:
             continue
 
@@ -85,13 +85,13 @@ if __name__ == '__main__':
         # dates.append(df.index)
     
     df = pd.concat(dfs)
-    conn_scr = sqlite3.connect('sqlite3/screener.sqlite3')
+    conn_scr = sqlite3.connect('sqlite3/screener.db')
 
     for market, df_market in df.groupby('market'):
         print(market)
-        cor_screener = df_market.pivot_table(index="date", columns="ticker", values='COR')
-        vrate_screener = df_market.pivot_table(index="date", columns="ticker", values='vrate')
-        mapct_screener = df_market.pivot_table(index="date", columns="ticker", values='ma200pct')
+        cor_screener = df_market.pivot_table(index="Date", columns="ticker", values='COR')
+        vrate_screener = df_market.pivot_table(index="Date", columns="ticker", values='vrate')
+        mapct_screener = df_market.pivot_table(index="Date", columns="ticker", values='ma200pct')
 
         cor_screener.to_sql(f'cor.{market}', conn_scr, if_exists='replace')
         vrate_screener.to_sql(f'vrate.{market}', conn_scr, if_exists='replace')

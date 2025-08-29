@@ -28,7 +28,7 @@ with open(os.path.join(project_root, "access_token.txt"), "r", encoding="utf-8")
 # -----------------------------
 # 환경 변수
 # -----------------------------
-ACCOUNT_ID = os.getenv("KIWOOM_ACCOUNT_ID", "ACC1")
+ACCOUNT_ID = os.getenv("ACC_ID", "81091874")
 MAX_SPLITS = int(os.getenv("MAX_SPLITS", "4"))
 TARGET_PCT = float(os.getenv("TARGET_PCT", "0.1"))
 STOP_PCT = float(os.getenv("STOP_PCT", "-0.1"))

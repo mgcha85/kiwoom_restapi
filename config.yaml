@@ -41,7 +41,7 @@ time_settings:
     microsecond: 0
   close_time:
     hour: 15
-    minute: 25
+    minute: 19
     second: 0
     microsecond: 0
   download_time:

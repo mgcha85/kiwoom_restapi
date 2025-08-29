@@ -25,7 +25,7 @@ init_db()
 with open("access_token.txt", "r") as f:
     token = f.read().strip()
 
-ACCOUNT_ID = os.getenv("KIWOOM_ACCOUNT_ID", "ACC1")
+ACCOUNT_ID = os.getenv("ACC_ID", "ACC1")
 BUY_COMMISSION_RATE = Decimal(os.getenv("BUY_COMMISSION_RATE", "0.00015"))  # 0.015% 예시
 
 
