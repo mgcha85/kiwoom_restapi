@@ -14,7 +14,9 @@ from models.trade_entities import Base, Order, Execution, Trade, Hold
 # ---------------------------------------------------------------------
 # 기본 세팅
 # ---------------------------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sqlite3/trade_test.db")
+# DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sqlite3/trade_test.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:alsrb2091@localhost:5433/binance")
+
 
 engine = create_engine(
     DATABASE_URL,
